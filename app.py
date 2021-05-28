@@ -1,7 +1,6 @@
-import datetime
-import logging
 import os
 import sqlalchemy
+import pymysql
 
 from flask import Flask, render_template, request
 
@@ -19,7 +18,7 @@ def init_connection_engine():
     if os.environ.get("DB_HOST"):
         return init_tcp_connection_engine(db_config)
     else:
-        return init_unix_connection_engine(db_config)
+        return init_tcp_connection_engine(db_config)
 
 def init_tcp_connection_engine(db_config):
 #    db_user = "root"
@@ -95,13 +94,10 @@ db = db or init_connection_engine()
 def index():
     msg_hello= []
 
-    try:
-        with db.connect() as conn:
-            msg_hello = conn.execute("SELECT mensagem FROM tabela").fetchone()
-            
-        return render_template('index.html', msg= msg_hello[0])
-    except:
-        return render_template('index.html', 'Erro na conexá oao database!')
+    with db.connect() as conn:
+        msg_hello = conn.execute("SELECT mensagem FROM tabela").fetchone()
+
+    return render_template('index.html', msg= msg_hello[0])
 
 
 if __name__ == "__main__":

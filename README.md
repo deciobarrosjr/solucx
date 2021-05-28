@@ -1,4 +1,4 @@
-#####     HELLO WORLD     #####
+##############################################################     HELLO WORLD     ##############################################################
 
 Este programa Hello World foi criado conforme as especifições detalahdas em: Infraestrutura em Cloud.pdf
 
@@ -19,7 +19,7 @@ app_env.py - aplicação para verificar variáveis de ambiente.
 
 A seguir os comandos das duas versões:
 
-#####     Work Load Identity
+#####     Work Load Identity ###################################################################################################################
 
 Change to the source folder of the project downloaded from Git.
 Execute the Google Cloud SDK Shell as administrator
@@ -86,8 +86,7 @@ kubectl apply -f service.yaml
 kubectl get services
 
 
-#####     Key File
-
+#####     Key File           ###################################################################################################################
 
 
 Change to the source folder of the project downloaded from Git.
@@ -138,7 +137,7 @@ gcloud projects add-iam-policy-binding prjdbjsolucx --member="serviceAccount:hel
 
 gcloud iam service-accounts keys create key.json --iam-account helloworld-gsa@prjdbjsolucx.iam.gserviceaccount.com 
 
-kubectl create secret generic deciomysasecret --from-file=credentials=key.json
+kubectl create secret generic deciomysasecret --from-file=credentials.json=key.json
 
 kubectl create secret generic dbjmysqlsecret --from-literal=username=root --from-literal=password=password123 --from-literal=database=exemplo
 
