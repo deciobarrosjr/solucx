@@ -38,9 +38,9 @@ gcloud services enable stackdriver.googleapis.com
 gcloud services enable compute.googleapis.com
 gcloud services enable deploymentmanager.googleapis.com
 
-gcloud sql instances create deciomysql --database-version=MYSQL_5_7 --cpu=2 --memory=8GB  --zone=us-central1-a --root-password=password123
+gcloud sql instances create dbjmysql --database-version=MYSQL_5_7 --cpu=2 --memory=8GB  --zone=us-central1-a --root-password=password123
 
-gcloud sql connect deciomysql --user=root
+gcloud sql connect dbjmysql --user=root
 
 mysql> create database exemplo\g
 mysql> use exemplo\g
@@ -106,9 +106,9 @@ gcloud services enable stackdriver.googleapis.com
 gcloud services enable compute.googleapis.com
 gcloud services enable deploymentmanager.googleapis.com
 
-gcloud sql instances create deciomysql --database-version=MYSQL_5_7 --cpu=2 --memory=8GB  --zone=us-central1-a --root-password=password123
+gcloud sql instances create dbjmysql --database-version=MYSQL_5_7 --cpu=2 --memory=8GB  --zone=us-central1-a --root-password=password123
 
-gcloud sql connect deciomysql --user=root
+gcloud sql connect dbjmysql --user=root
 
 mysql> create database exemplo\g
 mysql> use exemplo\g
