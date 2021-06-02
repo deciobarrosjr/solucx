@@ -209,10 +209,32 @@ resource "google_service_account" "gsa-cloudsql" {
   display_name = "Helloworld GSA  for SQL proxy"
 }
 
-resource "google_service_account_iam_binding" "gsa-cloudsql-bind" {
-  service_account_id = google_service_account.gsa-cloudsql.name
-  role               = "roles/editor"
-  # role = "roles/cloudsql.client"
+#resource "google_service_account_iam_binding" "gsa-cloudsql-bind" {
+#  service_account_id = google_service_account.gsa-cloudsql.name
+#  role               = "roles/editor"
+#  #role = "roles/cloudsql.client"
+
+#  members = ["serviceAccount:${var.gsa}@prjdbjsolucx.iam.gserviceaccount.com"]
+#}
+
+resource "google_project_iam_binding" "bind1" {
+  project = var.projeto
+  role    = "roles/compute.admin"
+
+  members = ["serviceAccount:${var.gsa}@prjdbjsolucx.iam.gserviceaccount.com"]
+}
+
+resource "google_project_iam_binding" "bind2" {
+  project = var.projeto
+
+  role = "roles/cloudsql.client"
+
+  members = ["serviceAccount:${var.gsa}@prjdbjsolucx.iam.gserviceaccount.com"]
+}
+
+resource "google_project_iam_binding" "bind3" {
+  project = var.projeto
+  role    = "roles/iam.serviceAccountUser"
 
   members = ["serviceAccount:${var.gsa}@prjdbjsolucx.iam.gserviceaccount.com"]
 }
