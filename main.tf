@@ -278,17 +278,42 @@ resource "google_service_account_iam_binding" "workload_identity_binding" {
   depends_on = [google_container_cluster.my_cluster]
 }
 
+####################################################################################################################################
+#PROBLEMAS A SOLUCIONAR
+
+#1. Não consegue fazer a anotação no Kubernets
+#2. Não consegui criar o schema do banco e popular com o registro dentro do terraform
+#3. Feito isso preciso testar os passos finais
+####################################################################################################################################
+#
+# Add annotation to the Kubernetes service account
+#
+
+#resource "kubernetes_namespace" "example" {
+#  metadata {
+#    annotations = {
+#      name = "example-annotation"
+#    }
+
+#    labels = {
+#      mylabel = "label-value"
+#    }
+
+#    name = "default"
+#  }
+#}
+
 #
 # Deploy the resources to the cluster
 #
 
-provider "kubectl" {
-  host                   = "https://${data.google_container_cluster.my_cluster.endpoint}"
-  token                  = data.google_client_config.provider.access_token
-  cluster_ca_certificate = base64decode(data.google_container_cluster.my_cluster.master_auth[0].cluster_ca_certificate)
+#provider "kubectl" {
+#  host                   = "https://${data.google_container_cluster.my_cluster.endpoint}"
+#  token                  = data.google_client_config.provider.access_token
+#  cluster_ca_certificate = base64decode(data.google_container_cluster.my_cluster.master_auth[0].cluster_ca_certificate)
 
-  load_config_file = false
-}
+#  load_config_file = false
+#}
 
 #resource "kubectl_manifest" "my_deploy" {
 #  yaml_body = file(var.yaml-file-path)

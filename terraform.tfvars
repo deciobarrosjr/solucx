@@ -1,7 +1,7 @@
 projeto       = "prjdbjsolucx"
 regiao        = "us-central1"
 zona          = "us-central1-a"
-banco-dados   = "dbjmysqlterra"
+banco-dados   = "dbjmysql21"
 cluster       = "helloworld-ter"
 ksa           = "helloworld-gke-ksa"
 gsa           = "helloworld-gsa"

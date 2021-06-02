@@ -176,6 +176,28 @@ Run the terraform apply command to execute the main.tf. As illustrated by the co
 	< YAML_FILE >: deve ser substituido pelo nome complete do arquivo deployment-ter.yaml. 
 	Exemplo: terraform apply -var="cred-file-path=C:\\decio\\prjdbjsolucx-gsa.json" -var="yaml-file-path=C:\\decio\\deployment-ter.yaml"
 
+Connect to the mysql instance and creates: database, table and one record
+	gcloud sql connect dbjmysql21 --user=root
+	Connecting to database with SQL user [root].Enter password:password123
+
+	mysql> create database exemplo\g
+	mysql> use exemplo\g
+	mysql>  	create table tabela(
+	   	linha INT NOT NULL AUTO_INCREMENT,
+	   	mensagem VARCHAR(100) NOT NULL,
+	   	PRIMARY KEY ( linha )
+			)\g
+	mysql> insert into tabela (mensagem) VALUES (“Hello World!”)\g
+	mysql> exit
+
+Configure kubectl to communicate with the cluster:
+	gcloud container clusters get-credentials helloworld-ter
+Add annotation to the Kubernetes service account.
+	kubectl annotate serviceAccount --namespace default helloworld-gke-ksa iam.gke.io/gcp-service-account=helloworld-gsa@prjdbjsolucx.iam.gserviceaccount.com
+Deploy the application.
+	kubectl apply -f deployment-ter.yaml
+	kubectl apply -f service.yaml
+	kubectl get services
 
 
 

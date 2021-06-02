@@ -44,6 +44,6 @@ spec:
         image: gcr.io/cloudsql-docker/gce-proxy:1.22.0
         command:
           - "/cloud_sql_proxy"
-          - "-instances=prjdbjsolucx:us-central1:dbjmysqlterra=tcp:3306"
+          - "-instances=prjdbjsolucx:us-central1:dbjmysql21=tcp:3306"
         securityContext:
           runAsNonRoot: true
