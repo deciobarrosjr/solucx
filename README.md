@@ -2,14 +2,15 @@
 
 Este programa Hello World foi criado conforme as especifições detalahdas em: Infraestrutura em Cloud.pdf
 
-Criei duas versões do procedimento: a primeira e mais indicada usando Work Load Identity e a segunda
-usando Key File.
+Criei três versões do procedimento: a primeira usando Work Load Identity, a segunda
+usando Key File e a terceira usando Terraform.
 
 Os scripts, das duas versões, estão aqui detalhados, no entando, gerei duas versões em pdf com os
 procedimentos mais detalhados e ilustrados para melhor entendimento:
 
 1: WorkLoadIdentity.pdf
 2: KeyFile.pdf
+3: Terraform.pdf
 
 Foram criadas as seguintes aplicações em Python:
 
@@ -150,8 +151,30 @@ kubectl apply -f service.yaml
 kubectl get services
 
 
+#####     Terraform  ###################################################################################################################
 
+Download the project from git: 
+On the google console, execute the following steps
+	Create a new project called prjdbjsolucx and associate it with your billing account
+	Create a GSA (google service account) and gives to it the Project->Editor role
+	Change the content of the terraform-gsa variable on the file terraform.tfvars to the GSA name created on the step before.
+	Download the GSA json key and rename it as: prjdbjsolucx-gsa.json 
 
+Executar o build da imagem
+	gcloud builds submit --tag gcr.io/prjdbjsolucx/helloworld-gke .
+
+Execute the following command to install the providers defined on the main.tf:
+	terraform init
+Run the terraform fmt command to check the main.tf for readability and consistency:
+	terraform fmt
+Run the terraform validate command to check syntax consistency of the main.tf:
+	terraform validate
+Run the terraform apply command to execute the main.tf. As illustrated by the command bellow:
+	terraform apply -var="cred-file-path=<CRED_FILE>" -var="yaml-file-path=< YAML_FILE >"
+
+	< CRED_FILE >: deve ser substituido pelo nome complete do arquivo de credenciais prjdbjsolucx-gsa.json. 
+	< YAML_FILE >: deve ser substituido pelo nome complete do arquivo deployment-ter.yaml. 
+	Exemplo: terraform apply -var="cred-file-path=C:\\decio\\prjdbjsolucx-gsa.json" -var="yaml-file-path=C:\\decio\\deployment-ter.yaml"
 
 
 

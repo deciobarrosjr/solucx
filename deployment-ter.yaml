@@ -1,0 +1,49 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: helloworld-gke
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: hello
+  template:
+    metadata:
+      labels:
+        app: hello
+    spec:
+      serviceAccountName: helloworld-gke-ksa
+      containers:
+      - name: hello-app
+        # Replace $GCLOUD_PROJECT with your project ID
+        image: gcr.io/prjdbjsolucx/helloworld-gke:latest
+        # This app listens on port 8080 for web traffic by default.
+        ports:
+        - containerPort: 8080
+        env:
+        - name: PORT
+          value: "8080"
+        - name: DB_HOST
+          value: "127.0.0.1:3306"
+        - name: DB_USER
+          valueFrom:
+            secretKeyRef:
+              name: dbjmysqlsecret
+              key: username
+        - name: DB_PASS
+          valueFrom:
+            secretKeyRef:
+              name: dbjmysqlsecret
+              key: password
+        - name: DB_NAME
+          valueFrom:
+            secretKeyRef:
+              name: dbjmysqlsecret
+              key: database
+      - name: cloud-sql-proxy
+        image: gcr.io/cloudsql-docker/gce-proxy:1.22.0
+        command:
+          - "/cloud_sql_proxy"
+          - "-instances=prjdbjsolucx:us-central1:dbjmysqlterra=tcp:3306"
+        securityContext:
+          runAsNonRoot: true
