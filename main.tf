@@ -53,11 +53,6 @@ variable "zona" {
   description = "Zona onde sera efetuado o provisionamento."
 }
 
-variable "banco-dados" {
-  type        = string
-  description = "Nome do banco de dados."
-}
-
 variable "cluster" {
   type        = string
   description = "Nome do cluster a ser criado."
@@ -105,7 +100,7 @@ provider "google-beta" {
 }
 
 #
-# Habilitandoas APIs necessárias
+# Habilitando as APIs necessárias
 #
 
 resource "google_project_service" "gcp_services" {
@@ -117,51 +112,16 @@ resource "google_project_service" "gcp_services" {
 }
 
 #
-# Creating the SQL Instance
+# Include the role to access the Container Registry to the GSA used to run Terraform
 #
 
-resource "google_sql_database_instance" "master" {
-  project          = var.projeto
-  name             = var.banco-dados
-  database_version = "MYSQL_5_7"
-  region           = var.regiao
+#resource "google_project_iam_binding" "gsa-terraform-container-bind" {
+#  project = var.projeto
+#  role    = "roles/resourcemanager.projectIamAdmin"
+#  members = ["serviceAccount:${var.terraform-gsa}@prjdbjsolucx.iam.gserviceaccount.com"]
 
-  settings {
-    tier              = "db-n1-standard-2"
-    availability_type = "REGIONAL"
-    backup_configuration {
-      enabled            = "true"
-      binary_log_enabled = "true"
-      start_time         = "04:00"
-    }
-    location_preference {
-      zone = var.zona
-    }
-  }
-}
-
-#
-# Cria um novo usuario para o mysql pois o Terraform apaga o usuario apos a criacao do banco
-#
-
-resource "google_sql_user" "users" {
-  project  = var.projeto
-  name     = "root"
-  instance = google_sql_database_instance.master.name
-  password = "password123"
-  type     = "BUILT_IN"
-
-  depends_on = [google_sql_database_instance.master]
-}
-
-#
-# Cria o database exemplo
-#
-
-
-
-
-
+#  depends_on = [google_project_service.gcp_services]
+#}
 
 #
 # Creates the cluster with Work Load Identity
@@ -173,20 +133,18 @@ resource "google_container_cluster" "my_cluster" {
   location           = var.zona
   initial_node_count = 3
 
-  master_auth {
-    username = ""
-    password = ""
-  }
 
   workload_identity_config {
     identity_namespace = "prjdbjsolucx.svc.id.goog"
   }
 
   node_config {
-    machine_type = "e2-medium"
+    service_account = "${var.terraform-gsa}@prjdbjsolucx.iam.gserviceaccount.com"
+    machine_type    = "e2-medium"
     oauth_scopes = [
-      "https://www.googleapis.com/auth/logging.write",
-      "https://www.googleapis.com/auth/monitoring",
+      #      "https://www.googleapis.com/auth/logging.write",
+      #      "https://www.googleapis.com/auth/monitoring",
+      "https://www.googleapis.com/auth/cloud-platform"
     ]
 
     metadata = {
@@ -209,34 +167,13 @@ resource "google_service_account" "gsa-cloudsql" {
   display_name = "Helloworld GSA  for SQL proxy"
 }
 
-#resource "google_service_account_iam_binding" "gsa-cloudsql-bind" {
-#  service_account_id = google_service_account.gsa-cloudsql.name
-#  role               = "roles/editor"
-#  #role = "roles/cloudsql.client"
-
-#  members = ["serviceAccount:${var.gsa}@prjdbjsolucx.iam.gserviceaccount.com"]
-#}
-
-resource "google_project_iam_binding" "bind1" {
+resource "google_project_iam_binding" "gsa-cloudsql-bind" {
   project = var.projeto
-  role    = "roles/compute.admin"
+  role    = "roles/cloudsql.client"
 
   members = ["serviceAccount:${var.gsa}@prjdbjsolucx.iam.gserviceaccount.com"]
-}
 
-resource "google_project_iam_binding" "bind2" {
-  project = var.projeto
-
-  role = "roles/cloudsql.client"
-
-  members = ["serviceAccount:${var.gsa}@prjdbjsolucx.iam.gserviceaccount.com"]
-}
-
-resource "google_project_iam_binding" "bind3" {
-  project = var.projeto
-  role    = "roles/iam.serviceAccountUser"
-
-  members = ["serviceAccount:${var.gsa}@prjdbjsolucx.iam.gserviceaccount.com"]
+  depends_on = [google_service_account.gsa-cloudsql]
 }
 
 #
@@ -257,6 +194,14 @@ provider "kubernetes" {
   host                   = "https://${data.google_container_cluster.my_cluster.endpoint}"
   token                  = data.google_client_config.provider.access_token
   cluster_ca_certificate = base64decode(data.google_container_cluster.my_cluster.master_auth[0].cluster_ca_certificate)
+}
+
+provider "kubectl" {
+  host                   = "https://${data.google_container_cluster.my_cluster.endpoint}"
+  token                  = data.google_client_config.provider.access_token
+  cluster_ca_certificate = base64decode(data.google_container_cluster.my_cluster.master_auth[0].cluster_ca_certificate)
+
+  load_config_file = false
 }
 
 #
@@ -282,8 +227,15 @@ resource "kubernetes_secret" "sgw-config" {
 
 resource "kubernetes_service_account" "example" {
   metadata {
-    name = var.ksa
+    name      = var.ksa
+    namespace = "default"
+    annotations = {
+      "iam.gke.io/gcp-service-account" = "helloworld-gsa@prjdbjsolucx.iam.gserviceaccount.com"
+    }
   }
+
+  automount_service_account_token = true
+
   depends_on = [google_container_cluster.my_cluster]
 }
 
@@ -300,54 +252,40 @@ resource "google_service_account_iam_binding" "workload_identity_binding" {
   depends_on = [google_container_cluster.my_cluster]
 }
 
-####################################################################################################################################
-#PROBLEMAS A SOLUCIONAR
-
-#1. Não consegue fazer a anotação no Kubernets
-#2. Não consegui criar o schema do banco e popular com o registro dentro do terraform
-#3. Feito isso preciso testar os passos finais
-####################################################################################################################################
-#
-# Add annotation to the Kubernetes service account
-#
-
-#resource "kubernetes_namespace" "example" {
-#  metadata {
-#    annotations = {
-#      name = "example-annotation"
-#    }
-
-#    labels = {
-#      mylabel = "label-value"
-#    }
-
-#    name = "default"
-#  }
-#}
-
 #
 # Deploy the resources to the cluster
 #
 
-#provider "kubectl" {
-#  host                   = "https://${data.google_container_cluster.my_cluster.endpoint}"
-#  token                  = data.google_client_config.provider.access_token
-#  cluster_ca_certificate = base64decode(data.google_container_cluster.my_cluster.master_auth[0].cluster_ca_certificate)
-
-#  load_config_file = false
-#}
-
-#resource "kubectl_manifest" "my_deploy" {
-#  yaml_body = file(var.yaml-file-path)
-#  depends_on = [google_container_cluster.my_cluster]
-#}
+resource "kubectl_manifest" "my_deploy" {
+  yaml_body  = file(var.yaml-file-path)
+  depends_on = [google_container_cluster.my_cluster]
+}
 
 #
 # Create the Hello World Service
 #
 
-#resource "kubectl_manifest" "my_helloworl_service" {
-#  yaml_body = file(var.yaml-svc-path)
-#  depends_on = [kubectl_manifest.my_deploy]
+resource "kubectl_manifest" "my_helloworl_service" {
+  yaml_body = file(var.yaml-svc-path)
+
+  depends_on = [kubectl_manifest.my_deploy]
+}
+
 #
-#}
+# Exibe o endereço IP do serviço disponibilizado
+#
+
+resource "time_sleep" "msg-final" {
+
+  create_duration = "120s"
+
+  provisioner "local-exec" {
+    command = "gcloud container clusters get-credentials helloworld-ter | kubectl get services"
+  }
+
+  depends_on = [kubectl_manifest.my_helloworl_service]
+}
+
+
+
+

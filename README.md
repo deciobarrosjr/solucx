@@ -159,6 +159,30 @@ On the google console, execute the following steps
 	Create a GSA (google service account) and gives to it the Project->Editor role
 	Change the content of the terraform-gsa variable on the file terraform.tfvars to the GSA name created on the step before.
 	Download the GSA json key and rename it as: prjdbjsolucx-gsa.json 
+On the google console, creates and populate the database. 
+The best practice for using Terraform states that the database schema creation and population should be addressed outside Terraform.
+
+Create the SQL instance on google.
+
+	gcloud sql instances create dbjmysqlterraform --database-version=MYSQL_5_7 --cpu=2 --memory=8GB  --zone=us-central1-a --root-password=password123
+
+Connect to the mysql instance and creates: database, table and one record
+
+	gcloud sql connect dbjmysqlterraform --user=root
+	Connecting to database with SQL user [root].Enter password:password123
+	mysql> create database exemplo\g
+	mysql> use exemplo\g
+	mysql>  	create table tabela(
+   		linha INT NOT NULL AUTO_INCREMENT,
+   		mensagem VARCHAR(100) NOT NULL,
+   		PRIMARY KEY ( linha )
+			)\g
+	mysql> insert into tabela (mensagem) VALUES (“Hello World!”)\g
+	mysql> exit
+
+Enable High availability
+
+	gcloud sql instances patch dbjmysqlterraform --availability-type REGIONAL --enable-bin-log --backup-start-time=04:00
 
 Executar o build da imagem
 	gcloud builds submit --tag gcr.io/prjdbjsolucx/helloworld-gke .
@@ -176,28 +200,7 @@ Run the terraform apply command to execute the main.tf. As illustrated by the co
 	< YAML_FILE >: deve ser substituido pelo nome complete do arquivo deployment-ter.yaml. 
 	Exemplo: terraform apply -var="cred-file-path=C:\\decio\\prjdbjsolucx-gsa.json" -var="yaml-file-path=C:\\decio\\deployment-ter.yaml"
 
-Connect to the mysql instance and creates: database, table and one record
-	gcloud sql connect dbjmysql21 --user=root
-	Connecting to database with SQL user [root].Enter password:password123
 
-	mysql> create database exemplo\g
-	mysql> use exemplo\g
-	mysql>  	create table tabela(
-	   	linha INT NOT NULL AUTO_INCREMENT,
-	   	mensagem VARCHAR(100) NOT NULL,
-	   	PRIMARY KEY ( linha )
-			)\g
-	mysql> insert into tabela (mensagem) VALUES (“Hello World!”)\g
-	mysql> exit
-
-Configure kubectl to communicate with the cluster:
-	gcloud container clusters get-credentials helloworld-ter
-Add annotation to the Kubernetes service account.
-	kubectl annotate serviceAccount --namespace default helloworld-gke-ksa iam.gke.io/gcp-service-account=helloworld-gsa@prjdbjsolucx.iam.gserviceaccount.com
-Deploy the application.
-	kubectl apply -f deployment-ter.yaml
-	kubectl apply -f service.yaml
-	kubectl get services
 
 
 
